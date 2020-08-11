@@ -1,4 +1,6 @@
-# pyquaero
+# pyquaero for Windows
+
+Modified version to (kind of) work with Windows, currently only reading status is supported.
 
 This is a Python library and web service for accessing [Aquaero](https://aquacomputer.de/aquaero-5.html) fan and pump controllers by Aqua Computer GmbH & Co. KG.
 
@@ -37,3 +39,4 @@ _pyquaero_ is open source software. The source code is distributed under the ter
 * JinTu for [aerotools-ng](https://github.com/JinTu/aerotools-ng). Without his work, pyquaero would not exist.
 * The members of the [Aqua Computer Forum](https://forum.aquacomputer.de) for helping, reverse engineering and feedback.
 * @DrTron for sending dump files and for testing.
+* Martin from HWiNFO for the Quadro structure help and idea to use the HID device on Windows

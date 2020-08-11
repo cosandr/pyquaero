@@ -1,8 +1,8 @@
 #
 # pyquaero - a Python library for Aquaero fan controllers
 #
-# Copyright (C) 2014 Richard "Shred" Körber
-#   https://github.com/shred/pyquaero
+# Copyright (C) 2020 Andrei Costescu
+#   https://github.com/cosandr/pyquaero
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as
@@ -18,14 +18,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-__author__ = 'Richard "Shred" Körber'
+__author__ = 'Andrei Costescu'
 
-import usb.core
-import usb.util
+import time
+from contextlib import contextmanager
+from typing import List
 
+import pywinusb.hid as hid
 
 VENDOR_ID = 0x0c70
 PRODUCT_ID = 0xf001
+
+
+@contextmanager
+def use_device(dev: hid.HidDevice):
+    if not dev.is_opened():
+        dev.open()
+    try:
+        yield dev
+    finally:
+        dev.close()
+
 
 class AquaDevice(object):
     """Aquaero USB device object.
@@ -36,55 +49,61 @@ class AquaDevice(object):
 
     def __init__(self, dev):
         """Initialize the AquaDevice object."""
-        self.dev = dev
-        self.interface = [self.dev[0][(x, 0)] for x in range(3)]
+        self.dev: hid.HidDevice = dev
+        self.dev.open()
+        self.dev.set_raw_data_handler(self.read_handler)
+        self.last_data = None
 
-        # claim the interfaces if held by the kernel
-        for intf in self.interface:
-            if dev.is_kernel_driver_active(intf.bInterfaceNumber):
-                self.dev.detach_kernel_driver(intf.bInterfaceNumber)
-                usb.util.claim_interface(self.dev, intf)
+    def read_handler(self, data):
+        self.last_data = bytes(data)
 
     def close(self):
         """Close the AquaDevice object after usage.
 
         Must be invoked to properly release the USB device!
         """
-        for intf in self.interface:
-            usb.util.release_interface(self.dev, intf)
-            self.dev.attach_kernel_driver(intf.bInterfaceNumber)
+        self.dev.close()
 
     def send_report(self, reportId, data, wIndex=2):
         """Send a USBHID OUT report request to the AquaDevice."""
-        self.dev.ctrl_transfer(bmRequestType=0x21, bRequest=0x09,
-                               wValue=(0x0200 | reportId), wIndex=wIndex,
-                               data_or_wLength=data)
+        raise RuntimeError("Not supported on Windows")
 
     def receive_report(self, reportId, length, wIndex=2):
         """Send a USBHID IN report request to the AquaDevice and receive the answer."""
-        return self.dev.ctrl_transfer(bmRequestType=0xa1, bRequest=0x01,
-                               wValue=(0x0300 | reportId), wIndex=wIndex,
-                               data_or_wLength=length)
+        raise RuntimeError("Not supported on Windows")
 
     def write_endpoint(self, data, endpoint):
         """Send a data package to the given endpoint."""
-        ep = self.interface[endpoint - 1][0]
-        ep.write(data)
+        raise RuntimeError("Not supported on Windows")
 
     def read_endpoint(self, length, endpoint):
         """Reads a number of data from the given endpoint."""
-        ep = self.interface[endpoint - 1][0]
-        return ep.read(length)
+        # For some reason Windows seems to poll the device about every second
+        # so we just need to wait for data and return it
+        while not self.last_data:
+            time.sleep(0.5)
+        return self.last_data
 
 
 def count_devices():
     """Count the number of Aquaero devices found."""
-    devices = list(usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID, find_all=True))
+    devices = []
+    hid_devices = hid.HidDeviceFilter(vendor_id=VENDOR_ID, product_id=PRODUCT_ID).get_devices()
+    for hd in hid_devices:
+        with use_device(hd) as dev:
+            if dev.find_output_reports():
+                devices.append(dev)
     return len(devices)
+
 
 def get_device(unit=0):
     """Return an AquaDevice instance for the given Aquaero device unit found."""
-    devices = list(usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID, find_all=True))
+    devices = []
+    hid_devices: List[hid.HidDevice] = hid.HidDeviceFilter(vendor_id=VENDOR_ID, product_id=PRODUCT_ID).get_devices()
+    for hd in hid_devices:
+        with use_device(hd) as dev:
+            if dev.find_output_reports():
+                devices.append(dev)
     if unit >= len(devices):
         raise IndexError('No Aquaero unit %d found' % unit)
     return AquaDevice(devices[unit])
