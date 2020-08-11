@@ -32,7 +32,7 @@ class Uptime(UnsignedLong):
 
 
 class QuadroSerializer1018(AquaSerializer):
-    """An AquaSerializer for Quadro firmware (structure?) version 1023."""
+    """An AquaSerializer for Quadro firmware version 1018 or higher."""
 
     # Many thanks to Martin from HWiNFO for sharing his findings
     status_scheme = Group(scheme={
@@ -47,11 +47,18 @@ class QuadroSerializer1018(AquaSerializer):
             'sensor':               Array(items=4, scheme={
                  'temp':                Temperature(at=0x34, step=2),
                                     }),
-                                }),
             'software':             Array(items=16, scheme={
                  'temp':                Temperature(at=0x3c, step=2),
                                     }),
-        'vcc12':                UnsignedWord(at=0x6c),
+                                }),
+        'units':                Group(scheme={
+            'temperature':          Mapped(at=0x5c, values={
+                                        0: 'celsius',
+                                        1: 'fahrenheit',
+                                        2: 'kelvin',
+                                    }),
+                                }),
+        'vcc12':                Fraction(at=0x6c, divisor=100.0),
         'flow_meters':          Array(items=1, scheme={
             'rate':                 Fraction(divisor=10.0, at=0x6e, step=2, optional=True),
                                 }),
@@ -63,24 +70,8 @@ class QuadroSerializer1018(AquaSerializer):
         }),
     })
 
-    settings_scheme = Group(scheme={
-        'units': Group(scheme={
-            'temperature': Mapped(at=0x5c, values={
-                0: 'celsius',
-                1: 'fahrenheit',
-                2: 'kelvin',
-            }),
-        }),
-    })
-
     def read_status(self, backend):
         return backend.read_status(188, max_age=1)
 
     def unpack_status(self, data):
         return self.status_scheme.get(data)
-
-    def read_settings(self, backend):
-        return backend.read_settings(188)
-
-    def unpack_settings(self, data):
-        return self.settings_scheme.get(data)

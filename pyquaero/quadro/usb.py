@@ -64,12 +64,6 @@ class QuadroDevice(object):
                     continue
                 raise
 
-    def receive_report(self, reportId, length, wIndex=1):
-        """Send a USBHID IN report request to the AquaDevice and receive the answer."""
-        return self.dev.ctrl_transfer(bmRequestType=0xa1, bRequest=0x01,
-                               wValue=(0x0300 | reportId), wIndex=wIndex,
-                               data_or_wLength=length)
-
     def read_endpoint(self, length, endpoint):
         """Reads a number of data from the given endpoint."""
         ep = self.interface[endpoint - 1][0]

@@ -64,23 +64,16 @@ class Backend:
         self.last_status = status
         self.last_status_ts = datetime.now()
 
-    def read_settings(self, length):
-        """Read the current settings."""
-        with self.lock:
-            return self.device.receive_report(11, length)
-
     def get_firmware(self):
         """Get the firmware version of the Quadro at the given AquaDevice."""
         from pyquaero.struct.type import Group, UnsignedWord
-        with self.lock:
-            status = self.read_status(self._expected_length, max_age=1)
+        status = self.read_status(self._expected_length, max_age=1)
         scheme = Group(scheme={'firmware_version': UnsignedWord(at=0x000d)})
         return scheme.get(status)['firmware_version']
 
     def get_structure(self):
         """Get the structure version of the Quadro at the given AquaDevice."""
         from pyquaero.struct.type import Group, UnsignedWord
-        with self.lock:
-            status = self.read_status(self._expected_length, max_age=1)
+        status = self.read_status(self._expected_length, max_age=1)
         scheme = Group(scheme={'structure_version': UnsignedWord(at=0x0001)})
         return scheme.get(status)['structure_version']
