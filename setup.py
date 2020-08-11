@@ -60,7 +60,7 @@ setup(
 
     packages=['pyquaero', 'pyquaero.struct', 'pyquaero.quadro', 'pyquaero.quadro.struct', 'pyqtools'],
     install_requires=[
-        'pyusb >= 1.0.0',
+        'pywinusb',
     ],
 
     entry_points={
