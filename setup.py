@@ -26,7 +26,7 @@ def readme():
 
 setup(
     name='pyquaero',
-    version='1.3.1',
+    version='1.4.0a',
     description='Library, tools and server for Aquaero cooler controllers',
     long_description=readme(),
     long_description_content_type='text/markdown',
@@ -58,7 +58,7 @@ setup(
         'Topic :: Utilities',
     ],
 
-    packages=['pyquaero', 'pyquaero.struct', 'pyqtools'],
+    packages=['pyquaero', 'pyquaero.struct', 'pyquaero.quadro', 'pyquaero.quadro.struct', 'pyqtools'],
     install_requires=[
         'pyusb >= 1.0.0',
     ],
