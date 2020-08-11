@@ -24,8 +24,8 @@
 import argparse
 import datetime
 
-import pyquaero.core
 from pyquaero.struct.serializer import to_json
+
 
 def printFlat(value, key=''):
     if value is None:
@@ -51,10 +51,18 @@ def main():
     parser.add_argument('-u', '--unit', default=0, type=int, help='Aquaero unit number')
     parser.add_argument('-t', '--type', default="status", choices=['status', 'settings', 'strings'], help='Data type to read, default is "status"')
     parser.add_argument('-f', '--format', default="json", choices=['json', 'compact', 'flat'], help='Output format, default is "json"')
+    parser.add_argument('-q', '--quadro', action='store_true', help='Read from Quadro')
     args = parser.parse_args()
 
     data = {}
-    with pyquaero.core.Aquaero(args.unit) as aq:
+    if args.quadro:
+        from pyquaero.quadro.core import Quadro
+        device = Quadro
+    else:
+        from pyquaero.core import Aquaero
+        device = Aquaero
+
+    with device(args.unit) as aq:
         if 'status' == args.type:
             data = aq.get_status()
         elif 'settings' == args.type:

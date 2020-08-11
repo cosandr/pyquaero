@@ -1,8 +1,8 @@
 #
 # pyquaero - a Python library for Aquaero fan controllers
 #
-# Copyright (C) 2014 Richard "Shred" Körber
-#   https://github.com/shred/pyquaero
+# Copyright (C) 2020 Andrei Costescu
+#   https://github.com/cosandr/pyquaero
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as
@@ -18,7 +18,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from . import type
-from .serializer import AquaSerializer
+__author__ = 'Andrei Costescu'
 
-name = "pyquaero.struct"
+
+def create_serializer(structure, firmware):
+    """Create an AquaSerializer instance for the given structure and firmware version."""
+    if structure >= 3 and firmware >= 1018:
+        from .struct1018 import QuadroSerializer1018
+        return QuadroSerializer1018()
+
+    raise LookupError('firmware version %d (structure version %d) is not supported' % (firmware, structure))
