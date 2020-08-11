@@ -23,8 +23,11 @@ __author__ = 'Andrei Costescu'
 
 def create_serializer(structure, firmware):
     """Create an AquaSerializer instance for the given structure and firmware version."""
+    if structure < 3 and firmware < 1018:
+        from .struct1 import QuadroSerializer1
+        return QuadroSerializer1()
     if structure >= 3 and firmware >= 1018:
-        from .struct1018 import QuadroSerializer1018
-        return QuadroSerializer1018()
+        from .struct3 import QuadroSerializer3
+        return QuadroSerializer3()
 
     raise LookupError('firmware version %d (structure version %d) is not supported' % (firmware, structure))

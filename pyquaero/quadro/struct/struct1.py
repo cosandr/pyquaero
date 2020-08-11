@@ -31,9 +31,9 @@ class Uptime(UnsignedLong):
         return datetime.timedelta(seconds=val/10)
 
 
-class QuadroSerializer1018(AquaSerializer):
-    """An AquaSerializer for Quadro firmware version 1018 or higher."""
-
+class QuadroSerializer1(AquaSerializer):
+    """An AquaSerializer for Quadro firmware version lower than 1018."""
+    # UNTESTED
     # Many thanks to Martin from HWiNFO for sharing his findings
     status_scheme = Group(scheme={
         'structure_version':    UnsignedWord(at=0x01),
@@ -42,36 +42,39 @@ class QuadroSerializer1018(AquaSerializer):
         'bootloader_version':   UnsignedWord(at=0x07),
         'hardware_version':     UnsignedWord(at=0x0b),
         'firmware_version':     UnsignedWord(at=0x0d),
-        'uptime':               Uptime(at=0x14),
+        'uptime':               Uptime(at=0x14),  # Unknown
         'temperatures':         Group(scheme={
             'sensor':               Array(items=4, scheme={
                  'temp':                Temperature(at=0x34, step=2),
                                     }),
-            'software':             Array(items=16, scheme={
+            'software':             Array(items=8, scheme={
                  'temp':                Temperature(at=0x3c, step=2),
                                     }),
                                 }),
         'units':                Group(scheme={
-            'temperature':          Mapped(at=0x5c, values={
-                                        0: 'celsius',
-                                        1: 'fahrenheit',
-                                        2: 'kelvin',
+            'software':             Array(items=8, scheme={
+                'temperature':          Mapped(at=0x50, step=1, values={
+                                            0: 'celsius',
+                                            1: 'fahrenheit',
+                                            2: 'kelvin',
+                                        }),
                                     }),
                                 }),
-        'vcc12':                Fraction(at=0x6c, divisor=100.0),
+        'vcc12':                Fraction(at=0x58, divisor=100.0),
         'flow_meters':          Array(items=1, scheme={
-            'rate':                 Fraction(divisor=10.0, at=0x6e, step=2, optional=True),
+            'rate':                 Fraction(divisor=10.0, at=0x5a, step=2, optional=True),
                                 }),
         'fans':                 Array(items=4, scheme={
-            'duty':                 Percent(at=0x70, step=13),
-            'voltage':              Fraction(at=0x72, step=13, divisor=100.0),
-            'power':                UnsignedWord(at=0x76, step=13),
-            'speed':                UnsignedWord(at=0x78, step=13, optional=True),
+            'duty':                 Percent(at=0x5c, step=13),
+            'voltage':              Fraction(at=0x5e, step=13, divisor=100.0),
+            'power':                UnsignedWord(at=0x62, step=13),
+            'speed':                UnsignedWord(at=0x64, step=13, optional=True),
         }),
     })
 
     def read_status(self, backend):
-        return backend.read_status(188, max_age=1)
+        # Might be 164
+        return backend.read_status(154, max_age=1)
 
     def unpack_status(self, data):
         return self.status_scheme.get(data)
